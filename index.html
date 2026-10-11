@@ -1,0 +1,113 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>AI Stock Analyst</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#0b1020;color:#edf2ff;
+font-family:Arial,sans-serif;padding:18px}
+header{padding:18px 0}
+h1{color:#61e6ad;margin-bottom:6px}
+p{color:#aab5d0;line-height:1.5}
+.card{background:#151d30;padding:16px;border-radius:14px;
+margin:14px 0;border:1px solid #293650}
+label{display:block;margin:12px 0 6px}
+input,textarea,button{width:100%;padding:12px;border-radius:9px;
+border:1px solid #35445f;background:#0c1425;color:white;
+font-size:16px}
+textarea{min-height:110px}
+button{background:#19a875;border:0;font-weight:bold;
+margin-top:12px;color:#06180f}
+.metric{display:inline-block;background:#202b43;padding:12px;
+border-radius:9px;margin:5px 3px 5px 0}
+#result{font-size:18px;font-weight:bold}
+small{color:#aab5d0}
+</style>
+</head>
+<body>
+<header>
+<h1>⚡ AI Stock Analyst</h1>
+<p>Indian stocks • Historical analysis • Free learning tool</p>
+</header>
+
+<div class="card">
+<h3>📊 Enter historical closing prices</h3>
+<p>Enter at least 25 closing prices, oldest first,
+separated by commas. Example: 100,101,99,102...</p>
+<label>Stock symbol (for your reference)</label>
+<input id="symbol" placeholder="e.g. IDEA">
+<label>Closing prices (oldest to newest)</label>
+<textarea id="prices" placeholder="100,101,99,102,104..."></textarea>
+<button onclick="analyse()">Analyse historical prices</button>
+</div>
+
+<div class="card">
+<h3>📈 Results</h3>
+<div id="result">Waiting for your data...</div>
+<div id="metrics"></div>
+<div id="explain"></div>
+</div>
+
+<div class="card">
+<h3>🛡️ Risk reminder</h3>
+<p>This tool analyses entered prices only. It has no live
+market feed and does not know news or future prices.
+Signals are educational, not guaranteed buy/sell advice.</p>
+<small>Always test strategies on unseen data before risking money.</small>
+</div>
+
+<script>
+function ema(a,period){
+ let k=2/(period+1),v=a[0];
+ for(let i=1;i<a.length;i++)v=a[i]*k+v*(1-k);
+ return v;
+}
+function rsi(a){
+ let g=0,l=0;
+ for(let i=a.length-14;i<a.length;i++){
+  let d=a[i]-a[i-1];
+  if(d>0)g+=d;else l-=d;
+ }
+ if(g===0&&l===0)return 50;
+ if(l===0)return 100;
+ return 100-100/(1+(g/14)/(l/14));
+}
+function analyse(){
+ const raw=document.getElementById('prices').value.trim();
+ const a=raw.split(/[,\s]+/).filter(Boolean).map(Number);
+ const result=document.getElementById('result');
+ const metrics=document.getElementById('metrics');
+ const explain=document.getElementById('explain');
+ if(a.length<25||a.some(x=>!Number.isFinite(x)||x<=0)){
+  result.textContent='Enter at least 25 valid positive prices.';
+  metrics.innerHTML='';explain.innerHTML='';return;
+ }
+ const e9=ema(a.slice(-Math.min(a.length,60)),9);
+ const e21=ema(a.slice(-Math.min(a.length,100)),21);
+ const rv=rsi(a.slice(-15));
+ const last=a[a.length-1];
+ let signal='NEUTRAL';
+ if(e9>e21&&last>e9&&rv>=50&&rv<70)signal='BULLISH SETUP';
+ if(e9<e21&&last<e9&&rv<50)signal='BEARISH SETUP';
+ result.textContent=signal;
+ metrics.innerHTML=
+ '<div class="metric">Last close: '+last.toFixed(2)+'</div>'+
+ '<div class="metric">EMA 9: '+e9.toFixed(2)+'</div>'+
+ '<div class="metric">EMA 21: '+e21.toFixed(2)+'</div>'+
+ '<div class="metric">RSI 14: '+rv.toFixed(1)+'</div>';
+ let notes=[];
+ notes.push(e9>e21?'EMA 9 is above EMA 21.':'EMA 9 is below or equal to EMA 21.');
+ notes.push(last>e9?'Last price is above EMA 9.':'Last price is below or equal to EMA 9.');
+ notes.push(rv>=70?'RSI is high; momentum may be stretched.':
+ rv<30?'RSI is low; weakness is strong.':'RSI is between 30 and 70.');
+ explain.innerHTML='<p><b>'+signal+'</b> is a rule-based result, not an AI prediction.</p><p>'+
+ notes.join('<br>')+'</p><p>Symbol: '+
+ (document.getElementById('symbol').value||'Not specified')+
+ '. No trading costs, volume, or market news included.</p>';
+}
+</script>
+</body>
+</html>
