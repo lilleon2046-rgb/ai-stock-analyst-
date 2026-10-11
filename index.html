@@ -1,122 +1,195 @@
-
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>AI Stock Analyst</title>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#101827">
+<title>AI Stock Analyst — Lab</title>
 <style>
-*{box-sizing:border-box}
-body{margin:0;padding:18px;background:#0b1020;color:#edf2ff;font-family:Arial,sans-serif}
-h1{color:#61e6ad}
-.card{background:#151d30;border:1px solid #293650;border-radius:14px;padding:16px;margin:16px 0}
-p{color:#b7c2d9;line-height:1.5}
-input,button{width:100%;padding:13px;margin:8px 0;border-radius:9px;font-size:16px}
-input{background:#0c1425;color:white;border:1px solid #35445f}
-button{background:#19a875;color:#06180f;border:0;font-weight:bold}
-.metric{display:inline-block;background:#202b43;padding:10px;border-radius:9px;margin:4px}
-small{color:#b7c2d9}
+:root{color-scheme:dark;--bg:#0b1220;--panel:#121d2e;--panel2:#172438;--line:#2a3a52;--text:#eef4ff;--muted:#a8b7cc;--blue:#79aaff;--green:#5ee0ad;--red:#ff8f9b;--amber:#ffd27a}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(160deg,#0b1220,#101a2b 55%,#0b1220);font:16px/1.5 system-ui,-apple-system,Segoe UI,Roboto,sans-serif;color:var(--text)}
+header{padding:24px 16px 16px;max-width:1050px;margin:auto}h1{font-size:clamp(1.6rem,5vw,2.25rem);margin:0 0 6px}h2{font-size:1.18rem;margin:0 0 12px}h3{font-size:1rem;margin:0 0 8px}.sub,.muted{color:var(--muted)}.sub{margin:0}
+main{max-width:1050px;margin:auto;padding:0 14px 40px;display:grid;gap:14px}.panel{background:rgba(18,29,46,.96);border:1px solid var(--line);border-radius:16px;padding:16px;box-shadow:0 8px 28px #0002}
+.grid{display:grid;gap:12px}.two{grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr))}.three{grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr))}
+label{display:block;font-size:.92rem;color:var(--muted);margin:0 0 5px}input,select,textarea,button{font:inherit}input:not([type=checkbox]):not([type=file]),select,textarea{width:100%;border:1px solid #354862;background:#0c1626;color:var(--text);border-radius:10px;padding:11px;margin:0 0 10px}
+input[type=file]{max-width:100%;margin:8px 0}input[type=checkbox]{accent-color:var(--blue);width:18px;height:18px;flex:0 0 auto}
+button{border:1px solid #3d5f92;background:#234a7f;color:white;padding:11px 14px;border-radius:10px;font-weight:650;cursor:pointer}button.secondary{background:#172438;border-color:#354862}button.danger{background:#5d2934;border-color:#82404d}button:active{transform:translateY(1px)}.actions{display:flex;gap:8px;flex-wrap:wrap}.actions button{flex:1 1 140px}
+.notice{border-left:3px solid var(--amber);padding:10px 12px;background:#332b1c55;border-radius:7px;color:#f8e8c3;font-size:.92rem}
+.good{color:var(--green)}.bad{color:var(--red)}.blue{color:var(--blue)}.pill{display:inline-block;border:1px solid var(--line);border-radius:999px;padding:3px 9px;color:var(--muted);font-size:.8rem}
+.checkrow{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-bottom:1px solid #25344a}.checkrow:last-child{border-bottom:0}.checkrow label{margin:0;color:var(--text);flex:1}
+#preview{display:none;width:100%;max-height:440px;object-fit:contain;background:#08101c;border:1px solid var(--line);border-radius:12px;margin-top:10px}
+.result{background:#0c1626;border:1px solid var(--line);padding:12px;border-radius:10px;white-space:pre-wrap;overflow-wrap:anywhere}
+.stat{padding:12px;border-radius:10px;background:#0c1626;border:1px solid var(--line)}.stat b{display:block;font-size:1.2rem;margin-top:3px}
+small{color:var(--muted)}footer{max-width:1050px;margin:auto;padding:0 16px 26px;color:var(--muted);font-size:.85rem}
+table{width:100%;border-collapse:collapse;font-size:.9rem}th,td{text-align:left;border-bottom:1px solid var(--line);padding:8px 5px;vertical-align:top}th{color:var(--muted)}
 </style>
 </head>
 <body>
-<h1>⚡ AI Stock Analyst</h1>
-<p>Historical Indian stock analysis • Free learning project</p>
+<header>
+  <span class="pill">PERSONAL LEARNING PROJECT · V1.1</span>
+  <h1>📈 AI Stock Analyst Lab</h1>
+  <p class="sub">Screenshot review · 5-minute scalping · intraday planning · paper-trading journal</p>
+</header>
+<main>
+<section class="panel">
+  <h2>0. Safety first</h2>
+  <div class="notice">This is an educational checklist, not a live market feed or a buy/sell recommendation. A screenshot cannot prove the next price move. Use paper trading first; never risk money you cannot afford to lose. No trades are placed by this page.</div>
+</section>
 
-<div class="card">
-<h3>📂 Import historical data</h3>
-<p>Choose a CSV file with a Date column and a Close column.
-Prices should be ordered oldest to newest, or include dates
-so the website can sort them.</p>
-<input type="file" id="file" accept=".csv,text/csv">
-<button onclick="loadCSV()">Import and analyse</button>
-<p id="status">No file selected.</p>
-</div>
+<section class="panel">
+  <h2>1. Choose analysis mode</h2>
+  <div class="grid two">
+    <div><label for="mode">Mode</label><select id="mode"><option value="scalp">5-minute scalping study</option><option value="intraday">Intraday study</option></select></div>
+    <div><label for="symbol">Stock / symbol (optional)</label><input id="symbol" placeholder="e.g. INFY (for your notes only)"></div>
+    <div><label for="timeframe">Chart timeframe</label><select id="timeframe"><option>5 minutes</option><option>15 minutes</option><option>1 day</option><option>Other / unclear</option></select></div>
+    <div><label for="session">Market/session note</label><input id="session" placeholder="e.g. first hour, lunchtime, closing hour"></div>
+  </div>
+  <small>Scalping uses very short moves and is especially sensitive to spread, fees, slippage and fast reversals. The 5-minute chart alone is not enough context.</small>
+</section>
 
-<div class="card">
-<h3>📈 Analysis results</h3>
-<div id="result">Waiting for data...</div>
-<div id="metrics"></div>
-<div id="notes"></div>
-</div>
+<section class="panel">
+  <h2>2. Upload a chart screenshot</h2>
+  <p class="muted">Choose a screenshot from your phone. This page previews it locally; it does not upload it to a server or automatically understand the image.</p>
+  <label for="shot">Chart screenshot</label><input id="shot" type="file" accept="image/*">
+  <img id="preview" alt="Local chart screenshot preview">
+  <div class="actions" style="margin-top:10px"><button id="promptBtn">Make AI review prompt</button><button class="secondary" id="clearShot">Clear screenshot</button></div>
+  <div id="promptOut" class="result" style="display:none;margin-top:12px"></div>
+  <div class="actions" style="margin-top:8px"><button class="secondary" id="copyPrompt" style="display:none">Copy prompt</button></div>
+  <small>To get actual image interpretation without exposing a secret key, attach the screenshot to ChatGPT and paste the generated prompt. Direct AI inside this public website requires a secure backend; never put an API key in index.html.</small>
+</section>
 
-<div class="card">
-<h3>🛡️ Important</h3>
-<p>This is a rule-based educational tool, not a verified AI
-prediction system. It does not provide live prices, news,
-or guaranteed buy/sell recommendations.</p>
-<small>Your selected CSV is processed in this browser.</small>
-</div>
+<section class="panel">
+  <h2>3. Indicator visibility checklist</h2>
+  <p class="muted">Tick only what you can actually see. If the settings aren't displayed, mark them unknown rather than guessing.</p>
+  <div class="grid two" id="indicatorList">
+    <div class="checkrow"><input type="checkbox" id="ema"><label for="ema"><b>EMA 9 / EMA 21</b><br><small>Are both lines visible? Is their order and slope clear?</small></label></div>
+    <div class="checkrow"><input type="checkbox" id="vwap"><label for="vwap"><b>VWAP</b><br><small>Is the VWAP line visible and labelled?</small></label></div>
+    <div class="checkrow"><input type="checkbox" id="rsi"><label for="rsi"><b>RSI</b><br><small>Can you read the value and its settings?</small></label></div>
+    <div class="checkrow"><input type="checkbox" id="macd"><label for="macd"><b>MACD</b><br><small>Are the lines/histogram and settings visible?</small></label></div>
+    <div class="checkrow"><input type="checkbox" id="bb"><label for="bb"><b>Bollinger Bands</b><br><small>Are upper, middle and lower bands visible?</small></label></div>
+    <div class="checkrow"><input type="checkbox" id="volume"><label for="volume"><b>Volume bars</b><br><small>Can the latest volume be compared with recent bars?</small></label></div>
+    <div class="checkrow"><input type="checkbox" id="levels"><label for="levels"><b>Support / resistance</b><br><small>Are horizontal levels clearly marked?</small></label></div>
+    <div class="checkrow"><input type="checkbox" id="candles"><label for="candles"><b>Candlestick pattern</b><br><small>Is the candle fully closed, not still forming?</small></label></div>
+  </div>
+  <div class="grid two" style="margin-top:12px">
+    <div><label for="settings">Visible settings / values</label><textarea id="settings" rows="3" placeholder="e.g. EMA 9 and 21 labels visible; RSI value is blurry/unknown"></textarea></div>
+    <div><label for="price">Current price shown (optional)</label><input id="price" type="number" min="0" step="any" placeholder="Enter only if readable"><label for="context">Other observations</label><textarea id="context" rows="2" placeholder="e.g. price near yesterday's high"></textarea></div>
+  </div>
+</section>
 
+<section class="panel">
+  <h2>4. Explainable setup checklist</h2>
+  <p class="muted">This produces a checklist summary, not a prediction. An unchecked item means “not confirmed”, not automatically bearish.</p>
+  <div class="grid two">
+    <div>
+      <h3>Potential bullish evidence</h3>
+      <div class="checkrow"><input type="checkbox" id="bclose"><label for="bclose">A candle closed above a level I identified in advance</label></div>
+      <div class="checkrow"><input type="checkbox" id="btrend"><label for="btrend">Trend/momentum indicators broadly agree</label></div>
+      <div class="checkrow"><input type="checkbox" id="bvol"><label for="bvol">Volume supports the move versus recent bars</label></div>
+      <div class="checkrow"><input type="checkbox" id="bspace"><label for="bspace">There is room before the next resistance</label></div>
+    </div>
+    <div>
+      <h3>Potential bearish / caution evidence</h3>
+      <div class="checkrow"><input type="checkbox" id="conflict"><label for="conflict">Indicators conflict or price is choppy</label></div>
+      <div class="checkrow"><input type="checkbox" id="nearlevel"><label for="nearlevel">Price is close to a major support/resistance level</label></div>
+      <div class="checkrow"><input type="checkbox" id="forming"><label for="forming">The current candle has not closed yet</label></div>
+      <div class="checkrow"><input type="checkbox" id="costs"><label for="costs">Spread/fees/slippage could outweigh the small move</label></div>
+    </div>
+  </div>
+  <div style="margin-top:12px"><label for="invalidation">What would invalidate the setup? (write a level/rule before any hypothetical entry)</label><input id="invalidation" placeholder="e.g. a candle closes back below the marked breakout level"></div>
+  <div class="actions"><button id="analyze">Generate explainable checklist</button><button class="secondary" id="resetAnalysis">Reset checklist</button></div>
+  <div id="analysisOut" class="result" style="display:none;margin-top:12px"></div>
+</section>
+
+<section class="panel">
+  <h2>5. Hypothetical risk calculator</h2>
+  <p class="muted">For practice only. This calculates possible loss and reward-to-risk; it does not say whether a trade should be taken.</p>
+  <div class="grid three">
+    <div><label for="entry">Hypothetical entry price (₹)</label><input id="entry" type="number" min="0" step="any" placeholder="e.g. 100"></div>
+    <div><label for="stop">Invalidation / stop price (₹)</label><input id="stop" type="number" min="0" step="any" placeholder="e.g. 99.5"></div>
+    <div><label for="target">Hypothetical target (₹)</label><input id="target" type="number" min="0" step="any" placeholder="e.g. 101"></div>
+    <div><label for="qty">Quantity (shares)</label><input id="qty" type="number" min="1" step="1" value="1"></div>
+    <div><label for="fees">Estimated total costs (₹)</label><input id="fees" type="number" min="0" step="any" value="0"></div>
+    <div><label for="capital">Practice account balance (₹)</label><input id="capital" type="number" min="0" step="any" placeholder="e.g. 10000"></div>
+  </div>
+  <div class="actions"><button id="calcRisk">Calculate hypothetical risk</button></div>
+  <div id="riskOut" class="result" style="display:none;margin-top:12px"></div>
+</section>
+
+<section class="panel">
+  <h2>6. Paper-trading journal</h2>
+  <p class="muted">Record simulated trades only. Results stay in this browser on this device; clearing browser data may remove them.</p>
+  <div class="grid two">
+    <div><label for="paperDate">Date</label><input id="paperDate" type="date"></div>
+    <div><label for="paperSide">Hypothetical side</label><select id="paperSide"><option>Long (buy-side idea)</option><option>Short (sell-side idea)</option><option>No trade / wait</option></select></div>
+    <div><label for="paperEntry">Entry (₹)</label><input id="paperEntry" type="number" min="0" step="any"></div>
+    <div><label for="paperExit">Exit (₹)</label><input id="paperExit" type="number" min="0" step="any"></div>
+    <div><label for="paperQty">Quantity</label><input id="paperQty" type="number" min="1" step="1" value="1"></div>
+    <div><label for="paperFees">Total estimated costs (₹)</label><input id="paperFees" type="number" min="0" step="any" value="0"></div>
+  </div>
+  <label for="paperNotes">Reason, invalidation and lesson</label><textarea id="paperNotes" rows="3" placeholder="What evidence did you see? Did you follow your written rules?"></textarea>
+  <div class="actions"><button id="savePaper">Save paper-trade record</button><button class="secondary" id="exportPaper">Export journal CSV</button><button class="danger" id="clearPaper">Clear journal</button></div>
+  <div id="paperSummary" class="grid three" style="margin-top:12px"></div>
+  <div style="overflow-x:auto;margin-top:12px"><table><thead><tr><th>Date / side</th><th>Entry → Exit</th><th>Net simulated P/L</th><th>Notes</th><th></th></tr></thead><tbody id="paperRows"><tr><td colspan="5" class="muted">No paper-trading records yet.</td></tr></tbody></table></div>
+</section>
+<section class="panel">
+  <h2>7. How to use the screenshot with ChatGPT</h2>
+  <ol>
+    <li>Open Angel One and select the stock and timeframe. Make sure symbol, price scale, timeframe and indicator labels are visible.</li>
+    <li>Take a screenshot with the latest candle and volume panel visible. Avoid cropping away context.</li>
+    <li>Upload it to ChatGPT and paste the generated review prompt from section 2.</li>
+    <li>Check the interpretation against the actual chart. If a value is unreadable, provide it manually or treat it as unknown.</li>
+    <li>Record the setup and later outcome in the paper-trading journal before considering any real-money use.</li>
+  </ol>
+  <div class="notice">A screenshot is a snapshot, not a live feed. This website does not fetch real-time prices, detect indicators with computer vision, or connect to Angel One. Indicator names/settings may be impossible to identify if labels are cropped or blurry.</div>
+</section>
+</main>
+<footer>Built for learning and paper testing. No financial advice, no brokerage connection, no live data, no automated orders. Do not publish API secrets in a public repository.</footer>
 <script>
-function parseCSV(text){
- const lines=text.trim().split(/\r?\n/);
- if(lines.length<26)throw Error("Please provide at least 25 price rows.");
- const split=line=>line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/)
-   .map(x=>x.trim().replace(/^"|"$/g,""));
- const header=split(lines[0]).map(x=>x.toLowerCase());
- const ci=header.findIndex(x=>["close","adj close","adjclose"].includes(x));
- const di=header.findIndex(x=>x==="date"||x==="datetime");
- if(ci<0)throw Error("Could not find a Close column in the CSV.");
- let rows=lines.slice(1).map(line=>{
-   const c=split(line),v=Number(c[ci]);
-   return {date:di>=0?c[di]:"",close:v};
- }).filter(r=>Number.isFinite(r.close)&&r.close>0);
- if(di>=0)rows.sort((a,b)=>new Date(a.date)-new Date(b.date));
- if(rows.length<25)throw Error("Need at least 25 valid closing prices.");
- return rows;
+const $=id=>document.getElementById(id);
+let imageUrl=null;
+$('paperDate').value=new Date().toISOString().slice(0,10);
+$('shot').addEventListener('change',()=>{
+  const f=$('shot').files[0];
+  if(imageUrl) URL.revokeObjectURL(imageUrl);
+  if(!f){$('preview').style.display='none';return}
+  if(!f.type.startsWith('image/')){alert('Please select an image file.');return}
+  imageUrl=URL.createObjectURL(f);$('preview').src=imageUrl;$('preview').style.display='block';
+});
+$('clearShot').onclick=()=>{$('shot').value='';$('preview').removeAttribute('src');$('preview').style.display='none';$('promptOut').style.display='none';$('copyPrompt').style.display='none';if(imageUrl)URL.revokeObjectURL(imageUrl);imageUrl=null};
+function checkedLabels(ids){return ids.filter(id=>$(id).checked).map(id=>({ema:'EMA 9 / EMA 21',vwap:'VWAP',rsi:'RSI',macd:'MACD',bb:'Bollinger Bands',volume:'Volume',levels:'Support/resistance',candles:'Candlestick patterns'}[id]||id))}
+function makePrompt(){
+ const mode=$('mode').value==='scalp'?'5-minute scalping study':'intraday study';
+ const inds=checkedLabels(['ema','vwap','rsi','macd','bb','volume','levels','candles']);
+ return `Please analyse the attached stock-chart screenshot for education and paper trading only. Mode: ${mode}. Symbol entered: ${$('symbol').value||'not provided'}. Timeframe selected: ${$('timeframe').value}. Session note: ${$('session').value||'not provided'}.
+Indicators I can see/ticked: ${inds.join(', ')||'none confirmed'}.
+Visible settings/values: ${$('settings').value||'not provided'}. Price shown: ${$('price').value||'not provided'}. My observations: ${$('context').value||'none'}.
+Please: (1) identify only indicators and settings actually readable in the image; mark uncertain items unknown; (2) describe trend, structure, support/resistance, candles and volume only when visible; (3) list evidence for and against a possible setup; (4) explain what extra context is missing; (5) give an educational invalidation/risk checklist, not a guaranteed prediction; (6) say WAIT/unclear when evidence is insufficient. Do not claim certainty, do not invent exact prices/values, and do not tell me to place a real-money trade. Do not place orders.`;
 }
-function ema(values,period){
- let e=values[0],k=2/(period+1);
- for(let i=1;i<values.length;i++)e=values[i]*k+e*(1-k);
- return e;
-}
-function rsi(values){
- let gains=0,losses=0;
- for(let i=values.length-14;i<values.length;i++){
-  const d=values[i]-values[i-1];
-  if(d>0)gains+=d;else losses-=d;
- }
- if(gains===0&&losses===0)return 50;
- if(losses===0)return 100;
- return 100-100/(1+gains/losses);
-}
-function analyse(rows){
- const a=rows.map(r=>r.close);
- const last=a[a.length-1];
- const e9=ema(a.slice(-60),9);
- const e21=ema(a.slice(-100),21);
- const rv=rsi(a.slice(-15));
- let signal="NEUTRAL";
- if(e9>e21&&last>e9&&rv>=50&&rv<70)signal="BULLISH SETUP";
- if(e9<e21&&last<e9&&rv<50)signal="BEARISH SETUP";
- document.getElementById("result").textContent=signal;
- document.getElementById("metrics").innerHTML=
-  '<div class="metric">Last close: '+last.toFixed(2)+'</div>'+
-  '<div class="metric">EMA 9: '+e9.toFixed(2)+'</div>'+
-  '<div class="metric">EMA 21: '+e21.toFixed(2)+'</div>'+
-  '<div class="metric">RSI 14: '+rv.toFixed(1)+'</div>';
- document.getElementById("notes").innerHTML=
-  '<p>Rows analysed: '+a.length+'</p>'+
-  '<p>EMA 9 is '+(e9>e21?"above":"below or equal to")+' EMA 21.</p>'+
-  '<p>Latest close is '+(last>e9?"above":"below or equal to")+' EMA 9.</p>'+
-  '<p>RSI '+(rv>=70?"is high; momentum may be stretched.":rv<30?"is low; weakness may be strong.":"is between 30 and 70.")+'</p>'+
-  '<p>Signal is a historical rule-based observation, not a prediction. It excludes trading costs, volume and news.</p>';
-}
-function loadCSV(){
- const file=document.getElementById("file").files[0];
- const status=document.getElementById("status");
- if(!file){status.textContent="Please select a CSV file first.";return;}
- const reader=new FileReader();
- reader.onload=()=>{
-  try{
-   const rows=parseCSV(reader.result);
-   analyse(rows);
-   status.textContent="Imported "+file.name+" successfully.";
-  }catch(e){status.textContent=e.message;}
- };
- reader.onerror=()=>status.textContent="Could not read the selected file.";
- reader.readAsText(file);
-}
-</script>
-</body>
-</html>
+$('promptBtn').onclick=()=>{$('promptOut').textContent=makePrompt();$('promptOut').style.display='block';$('copyPrompt').style.display='inline-block'};
+$('copyPrompt').onclick=async()=>{try{await navigator.clipboard.writeText($('promptOut').textContent);$('copyPrompt').textContent='Copied!'}catch(e){alert('Copy not available. Long-press the prompt and choose Copy.')}};
+$('analyze').onclick=()=>{
+ const bull=checkedLabels(['bclose','btrend','bvol','bspace']);
+ const caution=checkedLabels(['conflict','nearlevel','forming','costs']);
+ let conclusion='WAIT / UNCLEAR — not enough confirmed evidence to describe a strong setup.';
+ if(bull.length>=3 && caution.length===0) conclusion='POTENTIAL SETUP TO STUDY — several checklist items are checked, but this is not a buy/sell signal. Verify the chart, costs and risk in paper trading.';
+ else if(caution.length>=2) conclusion='HIGH CAUTION / WAIT — multiple caution flags are checked. Avoid forcing a setup.';
+ $('analysisOut').textContent=`Mode: ${$('mode').value==='scalp'?'5-minute scalping':'Intraday'}\nConclusion: ${conclusion}\n\nEvidence checked: ${bull.length?bull.join('; '):'none'}\nCaution flags: ${caution.length?caution.join('; '):'none checked (still verify the chart)'}\nInvalidation rule: ${$('invalidation').value||'NOT WRITTEN — define this before evaluating a hypothetical setup.'}\n\nImportant: this is a manually checked checklist, not AI image recognition or a statistically validated strategy.`;
+ $('analysisOut').style.display='block';
+};
+$('resetAnalysis').onclick=()=>{['bclose','btrend','bvol','bspace','conflict','nearlevel','forming','costs'].forEach(id=>$(id).checked=false);$('invalidation').value='';$('analysisOut').style.display='none'};
+$('calcRisk').onclick=()=>{
+ const e=+$('entry').value,s=+$('stop').value,t=+$('target').value,q=+$('qty').value,fees=+$('fees').value,cap=+$('capital').value;
+ if(!(e>0&&s>0&&t>0&&q>0)||e===s||((e-s)*(t-e)<=0)){ $('riskOut').textContent='Check the inputs. For this calculator, a long example needs stop < entry < target; a short example needs target < entry < stop. Use positive prices and a positive whole-share quantity.';$('riskOut').style.display='block';return}
+ const risk=Math.abs(e-s)*q+fees, reward=Math.abs(t-e)*q-fees, rr=reward>0?reward/risk:0, pct=cap>0?risk/cap*100:null;
+ $('riskOut').textContent=`Gross price risk to stop: ₹${(Math.abs(e-s)*q).toFixed(2)}\nGross price reward at target: ₹${(Math.abs(t-e)*q).toFixed(2)}\nApprox. risk including entered costs: ₹${risk.toFixed(2)}\nApprox. reward after entered costs: ₹${reward.toFixed(2)}\nApprox. reward:risk: ${rr.toFixed(2)} : 1${pct===null?'':`\nRisk as % of practice balance: ${pct.toFixed(2)}%`}\n\nNot included unless entered accurately: taxes, exchange/broker charges, spread, slippage, partial fills, gaps or execution errors. Costs may make a small scalp uneconomic.`;
+ $('riskOut').style.display='block';
+};
+const STORE='stockAnalystPaperJournalV1';
+function getRecords(){try{return JSON.parse(localStorage.getItem(STORE)||'[]')}catch(e){return []}}
+function saveRecords(rows){localStorage.setItem(STORE,JSON.stringify(rows));renderPaper()}
+function num(id){return Number($(id).value)}
+function renderPaper(){
+ const rows=getRecords();let total=0,wins=0,closed=0;
+ rows.forEach(r=>{if(r.side!=='No trade / wait'&&r.entry>0&&r.exit>0){const pnl=(r.side.startsWith('Long')?r.exit-r.entry:r.entry-r.exit)*r.qty-r.fees;total+=pnl;closed++;if(pnl>0)wins++}});
+ $('paperSummary').innerHTML=`<div class="stat"><small>Closed simulated records</small><b>${closed}</b></div><div class="stat"><small>Net simulated P/L</small><b class="${total
