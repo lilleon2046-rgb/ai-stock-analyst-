@@ -7,106 +7,115 @@
 <title>AI Stock Analyst</title>
 <style>
 *{box-sizing:border-box}
-body{margin:0;background:#0b1020;color:#edf2ff;
-font-family:Arial,sans-serif;padding:18px}
-header{padding:18px 0}
-h1{color:#61e6ad;margin-bottom:6px}
-p{color:#aab5d0;line-height:1.5}
-.card{background:#151d30;padding:16px;border-radius:14px;
-margin:14px 0;border:1px solid #293650}
-label{display:block;margin:12px 0 6px}
-input,textarea,button{width:100%;padding:12px;border-radius:9px;
-border:1px solid #35445f;background:#0c1425;color:white;
-font-size:16px}
-textarea{min-height:110px}
-button{background:#19a875;border:0;font-weight:bold;
-margin-top:12px;color:#06180f}
-.metric{display:inline-block;background:#202b43;padding:12px;
-border-radius:9px;margin:5px 3px 5px 0}
-#result{font-size:18px;font-weight:bold}
-small{color:#aab5d0}
+body{margin:0;padding:18px;background:#0b1020;color:#edf2ff;font-family:Arial,sans-serif}
+h1{color:#61e6ad}
+.card{background:#151d30;border:1px solid #293650;border-radius:14px;padding:16px;margin:16px 0}
+p{color:#b7c2d9;line-height:1.5}
+input,button{width:100%;padding:13px;margin:8px 0;border-radius:9px;font-size:16px}
+input{background:#0c1425;color:white;border:1px solid #35445f}
+button{background:#19a875;color:#06180f;border:0;font-weight:bold}
+.metric{display:inline-block;background:#202b43;padding:10px;border-radius:9px;margin:4px}
+small{color:#b7c2d9}
 </style>
 </head>
 <body>
-<header>
 <h1>⚡ AI Stock Analyst</h1>
-<p>Indian stocks • Historical analysis • Free learning tool</p>
-</header>
+<p>Historical Indian stock analysis • Free learning project</p>
 
 <div class="card">
-<h3>📊 Enter historical closing prices</h3>
-<p>Enter at least 25 closing prices, oldest first,
-separated by commas. Example: 100,101,99,102...</p>
-<label>Stock symbol (for your reference)</label>
-<input id="symbol" placeholder="e.g. IDEA">
-<label>Closing prices (oldest to newest)</label>
-<textarea id="prices" placeholder="100,101,99,102,104..."></textarea>
-<button onclick="analyse()">Analyse historical prices</button>
+<h3>📂 Import historical data</h3>
+<p>Choose a CSV file with a Date column and a Close column.
+Prices should be ordered oldest to newest, or include dates
+so the website can sort them.</p>
+<input type="file" id="file" accept=".csv,text/csv">
+<button onclick="loadCSV()">Import and analyse</button>
+<p id="status">No file selected.</p>
 </div>
 
 <div class="card">
-<h3>📈 Results</h3>
-<div id="result">Waiting for your data...</div>
+<h3>📈 Analysis results</h3>
+<div id="result">Waiting for data...</div>
 <div id="metrics"></div>
-<div id="explain"></div>
+<div id="notes"></div>
 </div>
 
 <div class="card">
-<h3>🛡️ Risk reminder</h3>
-<p>This tool analyses entered prices only. It has no live
-market feed and does not know news or future prices.
-Signals are educational, not guaranteed buy/sell advice.</p>
-<small>Always test strategies on unseen data before risking money.</small>
+<h3>🛡️ Important</h3>
+<p>This is a rule-based educational tool, not a verified AI
+prediction system. It does not provide live prices, news,
+or guaranteed buy/sell recommendations.</p>
+<small>Your selected CSV is processed in this browser.</small>
 </div>
 
 <script>
-function ema(a,period){
- let k=2/(period+1),v=a[0];
- for(let i=1;i<a.length;i++)v=a[i]*k+v*(1-k);
- return v;
+function parseCSV(text){
+ const lines=text.trim().split(/\r?\n/);
+ if(lines.length<26)throw Error("Please provide at least 25 price rows.");
+ const split=line=>line.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/)
+   .map(x=>x.trim().replace(/^"|"$/g,""));
+ const header=split(lines[0]).map(x=>x.toLowerCase());
+ const ci=header.findIndex(x=>["close","adj close","adjclose"].includes(x));
+ const di=header.findIndex(x=>x==="date"||x==="datetime");
+ if(ci<0)throw Error("Could not find a Close column in the CSV.");
+ let rows=lines.slice(1).map(line=>{
+   const c=split(line),v=Number(c[ci]);
+   return {date:di>=0?c[di]:"",close:v};
+ }).filter(r=>Number.isFinite(r.close)&&r.close>0);
+ if(di>=0)rows.sort((a,b)=>new Date(a.date)-new Date(b.date));
+ if(rows.length<25)throw Error("Need at least 25 valid closing prices.");
+ return rows;
 }
-function rsi(a){
- let g=0,l=0;
- for(let i=a.length-14;i<a.length;i++){
-  let d=a[i]-a[i-1];
-  if(d>0)g+=d;else l-=d;
- }
- if(g===0&&l===0)return 50;
- if(l===0)return 100;
- return 100-100/(1+(g/14)/(l/14));
+function ema(values,period){
+ let e=values[0],k=2/(period+1);
+ for(let i=1;i<values.length;i++)e=values[i]*k+e*(1-k);
+ return e;
 }
-function analyse(){
- const raw=document.getElementById('prices').value.trim();
- const a=raw.split(/[,\s]+/).filter(Boolean).map(Number);
- const result=document.getElementById('result');
- const metrics=document.getElementById('metrics');
- const explain=document.getElementById('explain');
- if(a.length<25||a.some(x=>!Number.isFinite(x)||x<=0)){
-  result.textContent='Enter at least 25 valid positive prices.';
-  metrics.innerHTML='';explain.innerHTML='';return;
+function rsi(values){
+ let gains=0,losses=0;
+ for(let i=values.length-14;i<values.length;i++){
+  const d=values[i]-values[i-1];
+  if(d>0)gains+=d;else losses-=d;
  }
- const e9=ema(a.slice(-Math.min(a.length,60)),9);
- const e21=ema(a.slice(-Math.min(a.length,100)),21);
- const rv=rsi(a.slice(-15));
+ if(gains===0&&losses===0)return 50;
+ if(losses===0)return 100;
+ return 100-100/(1+gains/losses);
+}
+function analyse(rows){
+ const a=rows.map(r=>r.close);
  const last=a[a.length-1];
- let signal='NEUTRAL';
- if(e9>e21&&last>e9&&rv>=50&&rv<70)signal='BULLISH SETUP';
- if(e9<e21&&last<e9&&rv<50)signal='BEARISH SETUP';
- result.textContent=signal;
- metrics.innerHTML=
- '<div class="metric">Last close: '+last.toFixed(2)+'</div>'+
- '<div class="metric">EMA 9: '+e9.toFixed(2)+'</div>'+
- '<div class="metric">EMA 21: '+e21.toFixed(2)+'</div>'+
- '<div class="metric">RSI 14: '+rv.toFixed(1)+'</div>';
- let notes=[];
- notes.push(e9>e21?'EMA 9 is above EMA 21.':'EMA 9 is below or equal to EMA 21.');
- notes.push(last>e9?'Last price is above EMA 9.':'Last price is below or equal to EMA 9.');
- notes.push(rv>=70?'RSI is high; momentum may be stretched.':
- rv<30?'RSI is low; weakness is strong.':'RSI is between 30 and 70.');
- explain.innerHTML='<p><b>'+signal+'</b> is a rule-based result, not an AI prediction.</p><p>'+
- notes.join('<br>')+'</p><p>Symbol: '+
- (document.getElementById('symbol').value||'Not specified')+
- '. No trading costs, volume, or market news included.</p>';
+ const e9=ema(a.slice(-60),9);
+ const e21=ema(a.slice(-100),21);
+ const rv=rsi(a.slice(-15));
+ let signal="NEUTRAL";
+ if(e9>e21&&last>e9&&rv>=50&&rv<70)signal="BULLISH SETUP";
+ if(e9<e21&&last<e9&&rv<50)signal="BEARISH SETUP";
+ document.getElementById("result").textContent=signal;
+ document.getElementById("metrics").innerHTML=
+  '<div class="metric">Last close: '+last.toFixed(2)+'</div>'+
+  '<div class="metric">EMA 9: '+e9.toFixed(2)+'</div>'+
+  '<div class="metric">EMA 21: '+e21.toFixed(2)+'</div>'+
+  '<div class="metric">RSI 14: '+rv.toFixed(1)+'</div>';
+ document.getElementById("notes").innerHTML=
+  '<p>Rows analysed: '+a.length+'</p>'+
+  '<p>EMA 9 is '+(e9>e21?"above":"below or equal to")+' EMA 21.</p>'+
+  '<p>Latest close is '+(last>e9?"above":"below or equal to")+' EMA 9.</p>'+
+  '<p>RSI '+(rv>=70?"is high; momentum may be stretched.":rv<30?"is low; weakness may be strong.":"is between 30 and 70.")+'</p>'+
+  '<p>Signal is a historical rule-based observation, not a prediction. It excludes trading costs, volume and news.</p>';
+}
+function loadCSV(){
+ const file=document.getElementById("file").files[0];
+ const status=document.getElementById("status");
+ if(!file){status.textContent="Please select a CSV file first.";return;}
+ const reader=new FileReader();
+ reader.onload=()=>{
+  try{
+   const rows=parseCSV(reader.result);
+   analyse(rows);
+   status.textContent="Imported "+file.name+" successfully.";
+  }catch(e){status.textContent=e.message;}
+ };
+ reader.onerror=()=>status.textContent="Could not read the selected file.";
+ reader.readAsText(file);
 }
 </script>
 </body>
